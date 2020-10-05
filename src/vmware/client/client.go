@@ -6,7 +6,7 @@ import (
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/session"
 	"github.com/vmware/govmomi/vim25/soap"
-	"main/app"
+	"main/models"
 	"net/url"
 	"time"
 )
@@ -17,7 +17,7 @@ type Client struct {
 	Cancel  context.CancelFunc
 }
 
-func getClient(conf app.Conf) (Client, error) {
+func getClient(conf models.Conf) (Client, error) {
 	var c Client
 	var err error
 	c.Ctx, c.Cancel = context.WithCancel(context.Background())
@@ -42,7 +42,7 @@ func getClient(conf app.Conf) (Client, error) {
 }
 
 // NewClient creates a govmomi.Client for use in the examples
-func newClient(conf app.Conf, ctx context.Context) (*govmomi.Client, error) {
+func newClient(conf models.Conf, ctx context.Context) (*govmomi.Client, error) {
 	// Parse URL from string
 	u, err := soap.ParseURL(conf.Server)
 	if err != nil {
@@ -67,7 +67,7 @@ func newClient(conf app.Conf, ctx context.Context) (*govmomi.Client, error) {
 	return c, nil
 }
 
-func processOverride(conf app.Conf, u *url.URL) {
+func processOverride(conf models.Conf, u *url.URL) {
 	// Override username if provided
 	var password string
 	var ok bool

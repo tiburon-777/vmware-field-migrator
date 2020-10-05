@@ -3,29 +3,25 @@ package main
 import (
 	"flag"
 	"log"
-	"main/app"
+	"main/models"
 	"main/vmware"
 )
 
-var Conf app.Conf
+var Conf models.Conf
 
 func init() {
-	flag.StringVar(&Conf.Server, "VCenter", "", "VMWare VCenter address")
-	flag.StringVar(&Conf.Login, "Login", "", "Login")
-	flag.StringVar(&Conf.Domain, "Domain", "", "Domain")
-	flag.StringVar(&Conf.Pass, "Password", "", "Password")
-	flag.IntVar(&Conf.Threads, "Threads", 5, "Number of parallel VMWare sessions")
-	flag.StringVar(&Conf.FieldProject, "FieldProject", "autoProject", "Field name for project accociation")
-	flag.StringVar(&Conf.FieldExpire, "FieldExpire", "autoExpire", "Field name for expiration date")
+	flag.StringVar(&Conf.Server, "vcenter", "", "VMWare VCenter address")
+	flag.StringVar(&Conf.Login, "login", "", "Login")
+	flag.StringVar(&Conf.Domain, "domain", "", "Domain")
+	flag.StringVar(&Conf.Pass, "pass", "", "Password")
+	flag.IntVar(&Conf.Threads, "threads", 5, "Number of parallel VMWare sessions")
+	flag.StringVar(&Conf.FieldProject, "fproject", "autoProject", "Field name for project accociation")
+	flag.StringVar(&Conf.FieldExpire, "fexpire", "autoExpire", "Field name for expiration date")
 }
 
 func main() {
 	flag.Parse()
-	a, err := app.NewApp(Conf)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	err = vmware.FieldMigrator(a)
+	err := vmware.FieldMigrator(Conf)
 	if err != nil {
 		log.Fatal(err.Error())
 	}

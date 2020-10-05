@@ -3,7 +3,7 @@ package client
 import (
 	"errors"
 	"log"
-	"main/app"
+	"main/models"
 	"time"
 )
 
@@ -14,7 +14,7 @@ type PoolItem struct {
 
 type Pool []*PoolItem
 
-func NewPool(conf app.Conf, capacity int) (Pool, error) {
+func NewPool(conf models.Conf, capacity int) (Pool, error) {
 	pool := Pool{}
 	for i := 0; i < capacity; i++ {
 		c, err := getClient(conf)
