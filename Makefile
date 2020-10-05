@@ -2,13 +2,13 @@ build:
 	go build -o ./bin ./src/main.go
 
 run:
-	go run ./cmd/calendar/main.go -config ./configs/config.toml
+	go run ./src/main.go
 
 test:
-	go test -race ./internal/...
+	go test -race ./src/...
 
 lint: install-lint-deps
-	golangci-lint run .cmd/... ./internal/...
+	golangci-lint run .src/...
 
 install-lint-deps:
 	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.30.0
