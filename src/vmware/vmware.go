@@ -117,6 +117,7 @@ func migrateFields(conf models.Conf, pool client.Pool, vm mo.VirtualMachine) err
 }
 
 func composeFieldProject(pkeysOriginal string, pkeysFromAnnotation string) (string, error) {
+	pkeysOriginal = strings.Replace(pkeysOriginal, " ", "", -1)
 	var pkeysSlice []string
 	pkeysSlice = append(pkeysSlice, strings.Split(pkeysOriginal, ",")...)
 	pkeysSlice = append(pkeysSlice, strings.Split(pkeysFromAnnotation, ",")...)

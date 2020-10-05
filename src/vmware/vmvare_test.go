@@ -22,6 +22,13 @@ func TestComposeFieldProject(t *testing.T) {
 			err:           nil,
 		},
 		{
+			msg:           "В кастоме пробел.\nОжидаем на выходе пустоту",
+			pkeyOrig:      " ",
+			pkeyAnnotated: "",
+			expected:      "",
+			err:           nil,
+		},
+		{
 			msg:           "В кастоме валидный список.\nБерем результат из кастома",
 			pkeyOrig:      "AAAA,DDDDD",
 			pkeyAnnotated: "",
