@@ -3,12 +3,13 @@ package client
 import (
 	"context"
 	"fmt"
-	"github.com/vmware/govmomi"
-	"github.com/vmware/govmomi/session"
-	"github.com/vmware/govmomi/vim25/soap"
 	"main/models"
 	"net/url"
 	"time"
+
+	"github.com/vmware/govmomi"
+	"github.com/vmware/govmomi/session"
+	"github.com/vmware/govmomi/vim25/soap"
 )
 
 type Client struct {
@@ -21,28 +22,28 @@ func getClient(conf models.Conf) (Client, error) {
 	var c Client
 	var err error
 	c.Ctx, c.Cancel = context.WithCancel(context.Background())
-	c.Govmomi, err = newClient(conf, c.Ctx)
+	c.Govmomi, err = newClient(c.Ctx, conf)
 	if err != nil {
-		return Client{}, fmt.Errorf("ошибка создаия клиента: %w", err)
+		return Client{}, fmt.Errorf("ошибка создания клиента: %w", err)
 	}
-	// SessionIsActive выполняет запрос к VMware, а не проверяет состояние объектов govmomi
+	// SessionIsActive выполняет запрос к VMware, а не проверяет состояние объектов govmomi.
 	sessionIsActive, errS := c.Govmomi.SessionManager.SessionIsActive(c.Ctx)
-	// проверим аутентификацию
+	// проверим аутентификацию.
 	userSession, errU := c.Govmomi.SessionManager.UserSession(c.Ctx)
 	if !sessionIsActive || userSession == nil || errS != nil || errU != nil {
-		// если инстанст есть, но с ним что-то не так, убиваем и пересоздаём
-		c.Govmomi.Logout(c.Ctx)
+		// если инстанст есть, но с ним что-то не так, убиваем и пересоздаём.
+		_ = c.Govmomi.Logout(c.Ctx)
 		c.Cancel()
-		c.Govmomi, err = newClient(conf, c.Ctx)
+		c.Govmomi, err = newClient(c.Ctx, conf)
 	}
 	if c.Govmomi == nil {
-		return Client{}, fmt.Errorf("ошибка создаия клиента: %w", err)
+		return Client{}, fmt.Errorf("ошибка создания клиента: %w", err)
 	}
 	return c, err
 }
 
-// NewClient creates a govmomi.Client for use in the examples
-func newClient(conf models.Conf, ctx context.Context) (*govmomi.Client, error) {
+// NewClient creates a govmomi.Client for use in the examples.
+func newClient(ctx context.Context, conf models.Conf) (*govmomi.Client, error) {
 	// Parse URL from string
 	u, err := soap.ParseURL(conf.Server)
 	if err != nil {

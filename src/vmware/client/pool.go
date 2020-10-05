@@ -40,7 +40,7 @@ func (p Pool) GetClient(timeout time.Duration) (*PoolItem, error) {
 			break
 		}
 	}
-	return &PoolItem{}, errors.New("VMWare connection pool timeout excided.")
+	return &PoolItem{}, errors.New("vmware connection pool timeout excided")
 }
 
 func (p Pool) PutClient(client *PoolItem) {

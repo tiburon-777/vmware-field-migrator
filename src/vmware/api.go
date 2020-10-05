@@ -3,16 +3,17 @@ package vmware
 import (
 	"context"
 	"errors"
+	"main/vmware/client"
+	"time"
+
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/view"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
-	"main/vmware/client"
-	"time"
 )
 
-// Спец функции для использования в многопоточке (инициирующие сессию)
+// Спец функции для использования в многопоточке (инициирующие сессию).
 func getAllVMs(pool client.Pool) ([]mo.VirtualMachine, error) {
 	vms := []mo.VirtualMachine{}
 	c, err := pool.GetClient(30 * time.Second)
@@ -32,7 +33,7 @@ func getAllVMs(pool client.Pool) ([]mo.VirtualMachine, error) {
 	return vms, nil
 }
 
-// Рядовые функции
+// Рядовые функции.
 func getVMByKey(ctx context.Context, c *vim25.Client, vmKey string) (mo.VirtualMachine, error) {
 	virtualMachineView, err := view.NewManager(c).CreateContainerView(ctx, c.ServiceContent.RootFolder, []string{"VirtualMachine"}, true)
 	if err != nil {
@@ -57,7 +58,7 @@ func getCustomFieldByName(ctx context.Context, c *vim25.Client, customValues []t
 	if err != nil {
 		return "Error"
 	}
-	if customValues != nil {
+	if len(customValues) > 0 {
 		for _, customValue := range customValues {
 			if customValue.GetCustomFieldValue().Key == fieldKey {
 				return customValue.(*types.CustomFieldStringValue).Value
@@ -72,7 +73,7 @@ func getCustomFieldKey(ctx context.Context, c *vim25.Client, customFieldName str
 	if err != nil {
 		return 0, err
 	}
-	fieldKey, err := customFieldsManager.FindKey(ctx, string(customFieldName))
+	fieldKey, err := customFieldsManager.FindKey(ctx, customFieldName)
 	if err != nil {
 		return 0, err
 	}

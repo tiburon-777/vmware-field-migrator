@@ -1,16 +1,13 @@
 build:
-	go build -o ./bin ./src/main.go
-
-run:
-	go run ./src/main.go
+	go build -o bin main.go
 
 test:
-	go test -race ./src/...
+	go test -race ./...
 
 lint: install-lint-deps
-	golangci-lint run .src/...
+	golangci-lint run ./...
 
 install-lint-deps:
-	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.30.0
+		(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.31.0
 
-.PHONY: build run test lint
+.PHONY: build test lint

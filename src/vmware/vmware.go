@@ -1,19 +1,23 @@
 package vmware
 
 import (
-	"github.com/vmware/govmomi/vim25/mo"
 	"log"
 	"main/models"
 	"main/vmware/client"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/vmware/govmomi/vim25/mo"
 )
 
-// Fan-ы
+// Fan-ы.
 func FieldMigrator(conf models.Conf) error {
 	log.Println("Запущена миграция полей VMWare в ", conf.Threads, "воркерах")
 	pool, err := client.NewPool(conf, 10)
+	if err != nil {
+		return err
+	}
 	vms, err := getAllVMs(pool)
 	if err != nil {
 		return err
@@ -36,7 +40,6 @@ func FieldMigrator(conf models.Conf) error {
 					if err := migrateFields(conf, pool, v); err != nil {
 						errs <- err
 					}
-
 				}
 			}
 		}(done, vm, &wg)
@@ -48,7 +51,7 @@ func FieldMigrator(conf models.Conf) error {
 	return nil
 }
 
-// Сами функции, используемые в мультиплексорах
+// Сами функции, используемые в мультиплексорах.
 func migrateFields(conf models.Conf, pool client.Pool, vm mo.VirtualMachine) error {
 	log.Println("Мигрируем поля", vm.Summary.Config.Name)
 	annotationModified, pkeysFromAnnotation, expireFromAnnotation := rebuildAnnotation(vm.Summary.Config.Annotation)
@@ -66,14 +69,8 @@ func migrateFields(conf models.Conf, pool client.Pool, vm mo.VirtualMachine) err
 	}
 	expireOriginal := getCustomFieldByName(c.Node.Ctx, c.Node.Govmomi.Client, vm.Summary.CustomValue, conf.FieldExpire)
 
-	pkeyFinal, err := composeFieldProject(pkeyOriginal, pkeysFromAnnotation)
-	if err != nil {
-		return err
-	}
-	expireFinal, err := composeFieldExpire(expireOriginal, expireFromAnnotation)
-	if err != nil {
-		return err
-	}
+	pkeyFinal := composeFieldProject(pkeyOriginal, pkeysFromAnnotation)
+	expireFinal := composeFieldExpire(expireOriginal, expireFromAnnotation)
 
 	if pkeyFinal != pkeyOriginal {
 		err := setVMCustomField(c.Node.Ctx, c.Node.Govmomi.Client, vm.ExtensibleManagedObject.Self.Value, conf.FieldProject, pkeyFinal)
@@ -116,7 +113,7 @@ func migrateFields(conf models.Conf, pool client.Pool, vm mo.VirtualMachine) err
 	return nil
 }
 
-func composeFieldProject(pkeysOriginal string, pkeysFromAnnotation string) (string, error) {
+func composeFieldProject(pkeysOriginal string, pkeysFromAnnotation string) string {
 	pkeysOriginal = strings.Replace(pkeysOriginal, " ", "", -1)
 	var pkeysSlice []string
 	pkeysSlice = append(pkeysSlice, strings.Split(pkeysOriginal, ",")...)
@@ -125,13 +122,11 @@ func composeFieldProject(pkeysOriginal string, pkeysFromAnnotation string) (stri
 	// Дедупликация и удаление пустых значений
 	pkeysSlice = deduplicate(pkeysSlice)
 
-	return strings.Trim(strings.Join(pkeysSlice, ","), ","), nil
+	return strings.Trim(strings.Join(pkeysSlice, ","), ",")
 }
 
-func composeFieldExpire(expireOriginal string, expireFromAnnotation string) (string, error) {
-
+func composeFieldExpire(expireOriginal string, expireFromAnnotation string) string {
 	var dateFinal string
-
 	parsedExpireFromAnnotation, err := time.Parse("02.01.2006", expireFromAnnotation)
 	if expireFromAnnotation != "" && err != nil {
 		expireFromAnnotation = ""
@@ -150,16 +145,15 @@ func composeFieldExpire(expireOriginal string, expireFromAnnotation string) (str
 	//			Отдаем из аннотации
 
 	if expireOriginal != "" {
-		return expireOriginal, nil
-	} else {
-		if expireFromAnnotation == "" || time.Since(parsedExpireFromAnnotation) > 0 {
-			currentTime := time.Now().AddDate(0, 1, 0)
-			dateFinal = currentTime.Format("02.01.2006")
-		} else {
-			dateFinal = expireFromAnnotation
-		}
+		return expireOriginal
 	}
-	return dateFinal, nil
+	if expireFromAnnotation == "" || time.Since(parsedExpireFromAnnotation) > 0 {
+		currentTime := time.Now().AddDate(0, 1, 0)
+		dateFinal = currentTime.Format("02.01.2006")
+	} else {
+		dateFinal = expireFromAnnotation
+	}
+	return dateFinal
 }
 
 func deduplicate(splice []string) []string {
@@ -172,7 +166,7 @@ func deduplicate(splice []string) []string {
 				break
 			}
 		}
-		if m == true && v != "" {
+		if m && v != "" {
 			res = append(res, v)
 		}
 	}

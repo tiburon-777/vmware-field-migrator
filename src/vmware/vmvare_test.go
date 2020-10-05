@@ -11,7 +11,6 @@ func TestComposeFieldProject(t *testing.T) {
 		pkeyOrig      string
 		pkeyAnnotated string
 		expected      string
-		err           error
 		msg           string
 	}{
 		{
@@ -19,61 +18,52 @@ func TestComposeFieldProject(t *testing.T) {
 			pkeyOrig:      "",
 			pkeyAnnotated: "",
 			expected:      "",
-			err:           nil,
 		},
 		{
 			msg:           "В кастоме пробел.\nОжидаем на выходе пустоту",
 			pkeyOrig:      " ",
 			pkeyAnnotated: "",
 			expected:      "",
-			err:           nil,
 		},
 		{
 			msg:           "В кастоме валидный список.\nБерем результат из кастома",
 			pkeyOrig:      "AAAA,DDDDD",
 			pkeyAnnotated: "",
 			expected:      "AAAA,DDDDD",
-			err:           nil,
 		},
 		{
 			msg:           "В кастоме повторы, в аннотации пусто.\nОжидаем на выходе список без повторов",
 			pkeyOrig:      "AAAA,AAAA,AAAA",
 			pkeyAnnotated: "",
 			expected:      "AAAA",
-			err:           nil,
 		},
 		{
 			msg:           "В кастоме повторы, в аннотации валидный список.\nОжидаем мердж без повторов",
 			pkeyOrig:      "BBBB,BBBB,BBBB",
 			pkeyAnnotated: "CCCC",
 			expected:      "BBBB,CCCC",
-			err:           nil,
 		},
 		{
 			msg:           "В кастоме пусто, в аннотации валидный список.\nБерем результат из аннотации",
 			pkeyOrig:      "",
 			pkeyAnnotated: "DDDD,EEEE",
 			expected:      "DDDD,EEEE",
-			err:           nil,
 		},
 		{
 			msg:           "В кастоме повтор с запятыми, в аннотации пусто.\nОжидаем на выходе список без повторов",
 			pkeyOrig:      ",FFFF,FFFF,FFFF,FFFF,",
 			pkeyAnnotated: "",
 			expected:      "FFFF",
-			err:           nil,
 		},
 		{
 			msg:           "Везде повторы.\nОжидаем на выходе список без повторов",
 			pkeyOrig:      "GGGG,GGGG,GGGG",
 			pkeyAnnotated: "GGGG,GGGG,GGGG",
 			expected:      "GGGG",
-			err:           nil,
 		},
 	}
 	for _, tst := range table {
-		result, err := composeFieldProject(tst.pkeyOrig, tst.pkeyAnnotated)
-		require.Equal(t, tst.err, err)
+		result := composeFieldProject(tst.pkeyOrig, tst.pkeyAnnotated)
 		require.Equal(t, tst.expected, result, tst.msg)
 	}
 }
@@ -83,7 +73,6 @@ func TestFieldExpire(t *testing.T) {
 		expireOrig      string
 		expireAnnotated string
 		expected        string
-		err             error
 		msg             string
 	}{
 		{
@@ -91,38 +80,34 @@ func TestFieldExpire(t *testing.T) {
 			expireOrig:      "01da01.2001",
 			expireAnnotated: "",
 			expected:        time.Now().AddDate(0, 1, 0).Format("02.01.2006"),
-			err:             nil,
 		},
 		{
 			msg:             "В аннотаци поле пурга какая-то",
 			expireOrig:      "",
 			expireAnnotated: "фыафыавыфаф",
 			expected:        time.Now().AddDate(0, 1, 0).Format("02.01.2006"),
-			err:             nil,
 		},
 		{
 			msg:             "В кастомном старая, но валидная дата.\nОжидается, что дата будет взята из кастомного.",
 			expireOrig:      "10.10.2010",
 			expireAnnotated: "11.11.2011",
-			expected:        "10.10.2010", err: nil,
+			expected:        "10.10.2010",
 		},
 		{
 			msg:             "В кастомном пусто, а в annotation старая дата.\nДолжны выставить сегодня+месяц.",
 			expireOrig:      "",
 			expireAnnotated: "01.01.2001",
 			expected:        time.Now().AddDate(0, 1, 0).Format("02.01.2006"),
-			err:             nil,
 		},
 		{
 			msg:             "В кастомном старая дата, а в аннотации пусто.\nОставляем дату из кастомного.",
 			expireOrig:      "01.01.2001",
 			expireAnnotated: "",
-			expected:        "01.01.2001", err: nil,
+			expected:        "01.01.2001",
 		},
 	}
 	for _, tst := range table {
-		result, err := composeFieldExpire(tst.expireOrig, tst.expireAnnotated)
-		require.Equal(t, tst.err, err, tst.msg)
+		result := composeFieldExpire(tst.expireOrig, tst.expireAnnotated)
 		require.Equal(t, tst.expected, result, tst.msg)
 	}
 }
