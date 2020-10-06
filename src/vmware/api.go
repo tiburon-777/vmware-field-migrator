@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/property"
 	"github.com/vmware/govmomi/view"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
@@ -27,7 +28,7 @@ func getAllVMs(pool client.Pool) ([]mo.VirtualMachine, error) {
 		return vms, err
 	}
 	defer v.Destroy(c.Node.Ctx)
-	if err = v.Retrieve(c.Node.Ctx, []string{"VirtualMachine"}, []string{"summary"}, &vms); err != nil {
+	if err = v.Retrieve(c.Node.Ctx, []string{"VirtualMachine"}, []string{"summary", "config"}, &vms); err != nil {
 		return vms, err
 	}
 	return vms, nil
@@ -41,16 +42,16 @@ func getVMByKey(ctx context.Context, c *vim25.Client, vmKey string) (mo.VirtualM
 	}
 	defer virtualMachineView.Destroy(ctx)
 	var vms []mo.VirtualMachine
-	if err = virtualMachineView.Retrieve(ctx, []string{"VirtualMachine"}, []string{"summary", "config", "datastore", "customValue"}, &vms); err != nil {
+
+	err = virtualMachineView.RetrieveWithFilter(ctx, []string{"VirtualMachine"}, []string{"summary", "config", "customValue"}, &vms, property.Filter{"config.uuid": vmKey})
+	if err != nil {
 		return mo.VirtualMachine{}, err
 	}
-	for _, vm := range vms {
-		if vm.ExtensibleManagedObject.Self.Value == vmKey {
-			return vm, nil
-		}
+	if len(vms) < 1 {
+		return mo.VirtualMachine{}, errors.New("Can't find VirtualMachine with UUID" + vmKey)
 	}
-	err = errors.New("Can't find VirtualMachine " + vmKey)
-	return mo.VirtualMachine{}, err
+
+	return vms[0], err
 }
 
 func getCustomFieldByName(ctx context.Context, c *vim25.Client, customValues []types.BaseCustomFieldValue, customFieldName string) string {

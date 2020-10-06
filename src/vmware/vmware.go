@@ -73,7 +73,7 @@ func migrateFields(conf models.Conf, pool client.Pool, vm mo.VirtualMachine) err
 	expireFinal := composeFieldExpire(expireOriginal, expireFromAnnotation)
 
 	if pkeyFinal != pkeyOriginal {
-		err := setVMCustomField(c.Node.Ctx, c.Node.Govmomi.Client, vm.ExtensibleManagedObject.Self.Value, conf.FieldProject, pkeyFinal)
+		err := setVMCustomField(c.Node.Ctx, c.Node.Govmomi.Client, vm.Config.Uuid, conf.FieldProject, pkeyFinal)
 		if err != nil {
 			return err
 		}
@@ -84,14 +84,14 @@ func migrateFields(conf models.Conf, pool client.Pool, vm mo.VirtualMachine) err
 	}
 
 	if expireFinal != expireOriginal {
-		err := setVMCustomField(c.Node.Ctx, c.Node.Govmomi.Client, vm.ExtensibleManagedObject.Self.Value, conf.FieldExpire, expireFinal)
+		err := setVMCustomField(c.Node.Ctx, c.Node.Govmomi.Client, vm.Config.Uuid, conf.FieldExpire, expireFinal)
 		if err != nil {
 			return err
 		}
 	}
 
 	//// Вычитываем кастомные поля заново и проверяем, что все сохранилось
-	vmChek, err := getVMByKey(c.Node.Ctx, c.Node.Govmomi.Client, vm.ExtensibleManagedObject.Self.Value)
+	vmChek, err := getVMByKey(c.Node.Ctx, c.Node.Govmomi.Client, vm.Config.Uuid)
 	if err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func migrateFields(conf models.Conf, pool client.Pool, vm mo.VirtualMachine) err
 	}
 
 	log.Println("Для виртуалки", vm.Summary.Config.Name, "установлено поле проекта:", pkeyFinal, "и дата истечения:", expireFinal)
-	err = setVMAnnotation(c.Node.Ctx, c.Node.Govmomi.Client, vm.ExtensibleManagedObject.Self.Value, annotationModified)
+	err = setVMAnnotation(c.Node.Ctx, c.Node.Govmomi.Client, vm.Config.Uuid, annotationModified)
 	if err != nil {
 		return err
 	}
