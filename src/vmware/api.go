@@ -14,6 +14,8 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 )
 
+const empty = "Нет данных"
+
 // Спец функции для использования в многопоточке (инициирующие сессию).
 func getAllVMs(pool client.Pool) ([]mo.VirtualMachine, error) {
 	vms := []mo.VirtualMachine{}
@@ -66,7 +68,7 @@ func getCustomFieldByName(ctx context.Context, c *vim25.Client, customValues []t
 			}
 		}
 	}
-	return "Нет данных"
+	return empty
 }
 
 func getCustomFieldKey(ctx context.Context, c *vim25.Client, customFieldName string) (int32, error) {

@@ -54,7 +54,7 @@ func FieldMigrator(conf models.Conf) error {
 // Сами функции, используемые в мультиплексорах.
 func migrateFields(conf models.Conf, pool client.Pool, vm mo.VirtualMachine) error {
 	log.Println("Мигрируем поля", vm.Summary.Config.Name)
-	annotationModified, pkeysFromAnnotation, expireFromAnnotation := rebuildAnnotation(vm.Summary.Config.Annotation)
+	annotationModified, pkeysFromAnnotation, expireFromAnnotation := rebuildAnnotation(vm.Summary.Config.Annotation, conf.Origins)
 
 	// Берем клиента из пула
 	c, err := pool.GetClient(30 * time.Second)
@@ -64,7 +64,7 @@ func migrateFields(conf models.Conf, pool client.Pool, vm mo.VirtualMachine) err
 	defer pool.PutClient(c)
 
 	pkeyOriginal := getCustomFieldByName(c.Node.Ctx, c.Node.Govmomi.Client, vm.Summary.CustomValue, conf.FieldProject)
-	if pkeyOriginal == "Нет данных" {
+	if pkeyOriginal == empty {
 		pkeyOriginal = ""
 	}
 	expireOriginal := getCustomFieldByName(c.Node.Ctx, c.Node.Govmomi.Client, vm.Summary.CustomValue, conf.FieldExpire)
@@ -73,8 +73,7 @@ func migrateFields(conf models.Conf, pool client.Pool, vm mo.VirtualMachine) err
 	expireFinal := composeFieldExpire(expireOriginal, expireFromAnnotation)
 
 	if pkeyFinal != pkeyOriginal {
-		err := setVMCustomField(c.Node.Ctx, c.Node.Govmomi.Client, vm.Config.Uuid, conf.FieldProject, pkeyFinal)
-		if err != nil {
+		if err := setVMCustomField(c.Node.Ctx, c.Node.Govmomi.Client, vm.Config.Uuid, conf.FieldProject, pkeyFinal); err != nil {
 			return err
 		}
 	}
@@ -84,8 +83,7 @@ func migrateFields(conf models.Conf, pool client.Pool, vm mo.VirtualMachine) err
 	}
 
 	if expireFinal != expireOriginal {
-		err := setVMCustomField(c.Node.Ctx, c.Node.Govmomi.Client, vm.Config.Uuid, conf.FieldExpire, expireFinal)
-		if err != nil {
+		if err := setVMCustomField(c.Node.Ctx, c.Node.Govmomi.Client, vm.Config.Uuid, conf.FieldExpire, expireFinal); err != nil {
 			return err
 		}
 	}
@@ -96,7 +94,7 @@ func migrateFields(conf models.Conf, pool client.Pool, vm mo.VirtualMachine) err
 		return err
 	}
 	contrPkey := getCustomFieldByName(c.Node.Ctx, c.Node.Govmomi.Client, vmChek.Summary.CustomValue, conf.FieldProject)
-	if contrPkey == "Нет данных" {
+	if contrPkey == empty {
 		contrPkey = ""
 	}
 	contrExpire := getCustomFieldByName(c.Node.Ctx, c.Node.Govmomi.Client, vmChek.Summary.CustomValue, conf.FieldExpire)
@@ -109,8 +107,7 @@ func migrateFields(conf models.Conf, pool client.Pool, vm mo.VirtualMachine) err
 	}
 
 	log.Println("Для виртуалки", vm.Summary.Config.Name, "установлено поле проекта:", pkeyFinal, "и дата истечения:", expireFinal)
-	err = setVMAnnotation(c.Node.Ctx, c.Node.Govmomi.Client, vm.Config.Uuid, annotationModified)
-	if err != nil {
+	if err = setVMAnnotation(c.Node.Ctx, c.Node.Govmomi.Client, vm.Config.Uuid, annotationModified); err != nil {
 		return err
 	}
 	return nil
@@ -176,7 +173,40 @@ func deduplicate(splice []string) []string {
 	return res
 }
 
-func rebuildAnnotation(oldNote string) (newNote string, pkeys string, expire string) {
+func rebuildAnnotation(oldNote string, origins map[string]int) (newNote string, pkeys string, expire string) {
+	for _, annotationLine := range strings.Split(oldNote, "\n") {
+		var deleteLine bool
+		p := strings.Split(annotationLine, ":")
+		if p[0] == "До" {
+			d := strings.Trim(p[1], " ")
+			_, err := time.Parse("02.01.2006", d)
+			if err == nil {
+				expire = d
+			}
+			deleteLine = true
+			continue
+		}
+
+		if len(p) > 1 && p[1] != "" {
+			p[1] = strings.Replace(p[1], "/", ",", -1)
+			for _, v := range strings.Split(p[1], ",") {
+				v = strings.TrimSpace(v)
+				if origins[v] == 1 {
+					pkeys = pkeys + "," + v
+					deleteLine = true
+				}
+			}
+		}
+		if !deleteLine && annotationLine != "" {
+			newNote = newNote + annotationLine + "\n"
+		}
+	}
+
+	return newNote, strings.Trim(pkeys, ","), expire
+}
+
+/*
+func rebuildAnnotationOld(oldNote string) (newNote string, pkeys string, expire string) {
 	for _, annotationLine := range strings.Split(oldNote, "\n") {
 		p := strings.Split(annotationLine, ":")
 		if p[0] == "До" {
@@ -198,3 +228,4 @@ func rebuildAnnotation(oldNote string) (newNote string, pkeys string, expire str
 	}
 	return newNote, pkeys, expire
 }
+*/

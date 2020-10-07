@@ -8,4 +8,5 @@ type Conf struct {
 	Threads      int
 	FieldProject string
 	FieldExpire  string
+	Origins      map[string]int
 }

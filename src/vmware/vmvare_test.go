@@ -141,6 +141,9 @@ func TestDeduplicator(t *testing.T) {
 }
 
 func TestRebuildAnnotation(t *testing.T) {
+
+	origins := map[string]int{"AAAA": 1, "BBBB": 1, "CCCC": 1, "DDDD": 1, "EEEE": 1, "FFFF": 1, "GGGG": 1, "HHHH": 1, "IIII": 1, "JJJJ": 1, "KKKK": 1}
+
 	table := []struct {
 		input   string
 		newNote string
@@ -157,28 +160,49 @@ func TestRebuildAnnotation(t *testing.T) {
 		},
 		{
 			msg:     "Оба поля и переносы в конце",
-			input:   "Владелец: Ушаков\nПроект: ABB\nДо: 01.06.2018\n\n\n\n",
+			input:   "Владелец: Ушаков\nПроект: AAAA\nДо: 01.06.2018\n\n\n\n",
 			newNote: "Владелец: Ушаков\n",
-			pkeys:   "ABB",
+			pkeys:   "AAAA",
 			expire:  "01.06.2018",
 		},
 		{
 			msg:     "Оба поля, список ключей и переносы в конце",
-			input:   "Владелец: Ушаков\nПроект: ABB,DFGHFSDG,SADF,ADQAD,FSF\nnadvasdvgasfs:dsvsfs\n\n\n",
+			input:   "Владелец: Ушаков\nПроект: AAAA,BBBB,CCCC,DDDD,EEEE\nnadvasdvgasfs:dsvsfs\n\n\n",
 			newNote: "Владелец: Ушаков\nnadvasdvgasfs:dsvsfs\n",
-			pkeys:   "ABB,DFGHFSDG,SADF,ADQAD,FSF",
+			pkeys:   "AAAA,BBBB,CCCC,DDDD,EEEE",
 			expire:  "",
 		},
 		{
 			msg:     "Оба поля и переносы в конце, дата пустая",
-			input:   "Владелец: Ушаков\nПроект: ABB,JGFJG,DXFX\nДо:\n\n\n\n",
+			input:   "Владелец: Ушаков\nПроект: AAAA,BBBB,CCCC\nДо:\n\n\n\n",
 			newNote: "Владелец: Ушаков\n",
-			pkeys:   "ABB,JGFJG,DXFX",
+			pkeys:   "AAAA,BBBB,CCCC",
+			expire:  "",
+		},
+		{
+			msg:     "Не существующий проект в аннотации",
+			input:   "Владелец: Ушаков\nПроект: AAAA,XXXXX,CCCC\nДо:\n\n\n\n",
+			newNote: "Владелец: Ушаков\n",
+			pkeys:   "AAAA,CCCC",
+			expire:  "",
+		},
+		{
+			msg:     "Не существующий проект в аннотации повторяется",
+			input:   "Владелец: Ушаков\nПроект: AAAA,XXXXX,BBBB,CCCC,XXXXX\nДо:\n\n\n\n",
+			newNote: "Владелец: Ушаков\n",
+			pkeys:   "AAAA,BBBB,CCCC",
+			expire:  "",
+		},
+		{
+			msg:     "Мешанина из ключей с полями, повторами и несуществующиам проектами",
+			input:   "Владелец: Ушаков\nПроект: AAAA,BBBB\nДо: 33.12.2033\nВеселый проект:CCCC\nЖажа: DDDD   ,\nПыщ пыщ :VVVVVV,CCCC\nфывпыфкпкыв а кап : EEEE\nА8ИА7аиаиа еАае са: FFFF , GGGG\nммвр5ркв*АВТА: HHHH\n\n\n\n\n\n",
+			newNote: "Владелец: Ушаков\n",
+			pkeys:   "AAAA,BBBB,CCCC,DDDD,CCCC,EEEE,FFFF,GGGG,HHHH",
 			expire:  "",
 		},
 	}
 	for _, tst := range table {
-		newNote, pkeys, expire := rebuildAnnotation(tst.input)
+		newNote, pkeys, expire := rebuildAnnotation(tst.input, origins)
 		require.Equal(t, tst.newNote, newNote, tst.msg)
 		require.Equal(t, tst.pkeys, pkeys, tst.msg)
 		require.Equal(t, tst.expire, expire, tst.msg)
