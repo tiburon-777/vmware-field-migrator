@@ -100,9 +100,7 @@ func migrateFields(conf models.Conf, pool client.Pool, vm mo.VirtualMachine) err
 	contrExpire := getCustomFieldByName(c.Node.Ctx, c.Node.Govmomi.Client, vmChek.Summary.CustomValue, conf.FieldExpire)
 
 	if contrPkey != pkeyFinal || contrExpire != expireFinal {
-		log.Println("Миграция полей виртуалки", vm.Summary.Config.Name, "прошла не корректно:")
-		log.Println("--- pkeyExpected:", pkeyFinal, "-- pkeyGeted:", contrPkey)
-		log.Println("--- dateExpected:", expireFinal, "-- dateGeted:", contrExpire)
+		log.Println("Миграция полей виртуалки", vm.Summary.Config.Name, "прошла не корректно: --- pkeyExpected:", pkeyFinal, "-- pkeyGeted:", contrPkey, "--- dateExpected:", expireFinal, "-- dateGeted:", contrExpire)
 		return err
 	}
 	if pkeyFinal != pkeyOriginal && expireFinal != expireOriginal {
