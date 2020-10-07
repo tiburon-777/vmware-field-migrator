@@ -96,6 +96,9 @@ func migrateFields(conf models.Conf, pool client.Pool, vm mo.VirtualMachine) err
 		return err
 	}
 	contrPkey := getCustomFieldByName(c.Node.Ctx, c.Node.Govmomi.Client, vmChek.Summary.CustomValue, conf.FieldProject)
+	if contrPkey == "Нет данных" {
+		contrPkey = ""
+	}
 	contrExpire := getCustomFieldByName(c.Node.Ctx, c.Node.Govmomi.Client, vmChek.Summary.CustomValue, conf.FieldExpire)
 
 	if contrPkey != pkeyFinal || contrExpire != expireFinal {
