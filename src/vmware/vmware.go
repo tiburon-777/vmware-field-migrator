@@ -105,8 +105,11 @@ func migrateFields(conf models.Conf, pool client.Pool, vm mo.VirtualMachine) err
 		log.Println("--- dateExpected:", expireFinal, "-- dateGeted:", contrExpire)
 		return err
 	}
-
-	log.Println("Для виртуалки", vm.Summary.Config.Name, "установлено поле проекта:", pkeyFinal, "и дата истечения:", expireFinal)
+	if pkeyFinal != pkeyOriginal && expireFinal != expireOriginal {
+		log.Println("Для виртуалки", vm.Summary.Config.Name, "установлено поле проекта:", pkeyFinal, "и дата истечения:", expireFinal)
+	} else {
+		log.Println("Для виртуалки", vm.Summary.Config.Name, "ничего не делали")
+	}
 	if err = setVMAnnotation(c.Node.Ctx, c.Node.Govmomi.Client, vm.Config.Uuid, annotationModified); err != nil {
 		return err
 	}
